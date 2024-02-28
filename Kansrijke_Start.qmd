@@ -1,0 +1,1480 @@
+---
+title: "Thematische schets Kansrijke Start `r params$gemeentenaam`"
+execute:
+  echo: false
+format: 
+  html:
+    code-fold: true
+    page-layout: article
+    toc: TRUE
+    toc-location: left
+    toc-depth: 3
+    toc-title: "Inhoudsopgave"
+    embed-resources: true
+    theme:
+    - cosmo
+engine: knitr
+params:
+  gemeentenaam: "'s-Hertogenbosch"
+  gemeenten_hvb: !expr c("Bernheze", "Boekel", "Boxtel", "Dongen", "Gilze en Rijen", "Goirle",
+                   "'s-Hertogenbosch", "Heusden", "Hilvarenbeek", "Land van Cuijk","Loon op Zand",
+                   "Maashorst", "Meierijstad", "Oisterwijk", "Oss", "Sint-Michielsgestel",
+                   "Tilburg","Vught", "Waalwijk")
+  bevolkingsprognose_xlsx: "input/data/Bevolking - gemeenten - prognose 2023.xlsx"
+  geboren_kinderen_xlsx: "input/data/Levend_geboren_kinderen.xlsx"
+  leeftijd_moeder_xlsx: "input/data/Leeftijd_moeder.xlsx"
+  perinatale_kerncijfers_xlsx: "input/data/Perinatale_kerncijfers.xlsx"
+  prognose_geboorten_xlsx: "input/data/prognose_geboorten.xlsx"
+  kinderen_per_vrouw_xlsx: "input/data/Kinderen_per_vrouw.xlsx"
+  gehuwd_xlsx: "input/data/Gehuwd.xlsx"
+  woonsituatie_xlsx: "input/data/woonsituatie.xlsx"
+  inkomen_xlsx: "input/data/Inkomen.xlsx"
+  geldgebrek_xlsx: "input/data/Geldgebrek.xlsx"
+  opleiding_xlsx: "input/data/Opleiding.xlsx"
+  etniciteit_xlsx: "input/data/Etniciteit.xlsx"
+  moeder_niet_gerookt_xlsx: "input/data/Moeder_niet_gerookt.xlsx"
+  moeder_geen_alcohol_xlsx: "input/data/Moeder_geen_alcohol.xlsx"
+  overgewicht_2jarigen_xlsx: "input/data/Overgewicht_2jarigen.xlsx"
+  spraaktaal_xlsx: "input/data/Spraaktaal_woongemeente_2021.xlsx"
+  borstvoeding_xlsx: "input/data/Borstvoeding_woongemeente_2021.xlsx"
+  sigarettenrook_xlsx: "input/data/sigarettenrook.xlsx"
+  schermtijd_xlsx: "input/data/schermtijd.xlsx"
+  buitenspelen_xlsx: "input/data/buitenspelen.xlsx"
+  dagelijks_groente_xlsx: "input/data/Dagelijks groente.xlsx"
+  dagelijks_fruit_xlsx: "input/data/Dagelijks fruit.xlsx"
+  dagelijks_ontbijt_xlsx: "input/data/Dagelijks ontbijt.xlsx"
+  dagelijks_warme_maaltijd_xlsx: "input/data/Dagelijks warme maaltijd.xlsx"
+  dagelijks_tussendoortje_xlsx: "input/data/Dagelijks tussendoortje.xlsx"
+  wekelijks_suikerdrank_xlsx: "input/data/Wekelijks suikerdrank.xlsx"
+  opvoedproblemen_xlsx: "input/data/Opvoedproblemen.xlsx"
+  opvoedstress_xlsx: "input/data/opvoedstress.xlsx"
+---
+
+
+```{css}
+
+.quarto-title > h1.title {
+  opacity: 0 !important;
+  height: 0;
+}
+
+.geleBanner > h2 {
+  background-color:#FEC80F;
+  color: #FFFFFF;
+  padding-left: 1em;
+}
+
+/* Meer ruimte onder sommige divs */
+.legeRegel {
+  margin-bottom: 2em;
+}
+
+
+```
+
+
+```{r echo=FALSE, message=F}
+
+# Boel staat nu op 1 gemeente dmv params$gemeentenaam. Dit object wordt op verschillende plekken in de code aangeroepen.
+# Later nog aanpassen dat alle gemeenten in een loop gemaakt worden.
+
+library(magick)
+library(readxl)
+library(ggplot2)
+library(plotly)
+library(gt)
+library(tidyr)
+
+source("subfuncties.R")
+
+# Header afbeelding met 
+afbeelding <- image_read("input/Afbeeldingen/Header_pagina1_voetjes.jpg")
+
+# Voeg tekst toe aan header. Vul gemeentenaam dynamisch in
+afbeelding_annotate <- image_annotate(afbeelding, 
+                                      paste0("THEMATISCHE SCHETS\nKansrijke Start - ", params$gemeentenaam),
+                                      size = 30, 
+                                      color = "#FDC715", 
+                                      gravity = "southeast", 
+                                      font = "Helvetica",
+                                      weight = 700)
+
+```
+
+
+`r afbeelding_annotate`
+
+## Inleiding {.geleBanner}
+
+Ieder kind verdient de best mogelijke start en een optimale kans op een goede toekomst. De eerste 1000 dagen van een kind zijn daarvoor cruciaal. De gezondheid van een kind voor, tijdens en na de geboorte blijkt een belangrijke voorspeller te zijn van problemen -- zowel fysiek als mentaal - op latere leeftijd. Circa 14% van de kinderen (bijna 25.000 per jaar in Nederland) heeft geen goede start door vroeggeboorte, een te laag geboortegewicht of een combinatie daarvan.
+
+Hoe staat het met deze eerste fase van het leven van kinderen in de gemeente `r params$gemeentenaam`? Wat doen moeders al tijdens de zwangerschap om zo gezond mogelijk te starten? En hoe staan de gezinnen er na de geboorte voor? Deze vragen staan centraal in deze thematische schets.
+
+### Aantal levend geboren kinderen in de periode 2011-2021
+
+```{r, grafiek_GeborenKinderen, echo=FALSE, message=F, fig.height = 3, out.width="100%"}
+
+# Plot met aantal levend geboren kinderen. 
+
+  data_GeborenKinderen <- read_excel(params$geboren_kinderen_xlsx) %>% 
+    filter(RegioS_label %in% params$gemeentenaam)
+  
+# ggplot heeft geen mooi scherpe lijnen. Wrap het daarin in een plotly element
+  ggplotly(
+    ggplot(data_GeborenKinderen, aes(x = Perioden_label, y = TotaalLevendGeborenKinderen_1)) +
+      geom_line(aes(group = 1), color = "#1a2c54", linewidth = 1) +
+      geom_point(aes(group = 1), color = "#1a2c54", size = 3) +
+      geom_text(data = data_GeborenKinderen, aes(x = Perioden_label, 
+                                                 y = TotaalLevendGeborenKinderen_1 + max(TotaalLevendGeborenKinderen_1, na.rm = T) / 40,
+                                                 label = TotaalLevendGeborenKinderen_1)) +
+      xlab("Perioden_label") +
+      scale_x_continuous(n.breaks = length(unique(data_GeborenKinderen$Perioden_label))) +
+      scale_y_continuous(n.breaks = 3) +  
+      theme(axis.title = element_blank(),
+            axis.line.x = element_blank(),
+            panel.background = element_blank(),
+            panel.grid.major.y = element_line(color="#bfbdb6"),
+            axis.text.x = element_text(angle = 45, hjust = 1),
+            axis.text.y = element_blank(),
+            axis.ticks.y = element_blank()),
+    tooltip = NULL
+  ) %>%
+  config(displayModeBar = FALSE) %>%
+  layout(xaxis = list(fixedrange = TRUE), 
+         yaxis = list(fixedrange = TRUE)
+         )
+
+```
+
+```{r, tabel_GeborenKinderen, echo=FALSE, message=F}
+
+data_GeborenKinderen <- data_GeborenKinderen %>%
+  select(Perioden_label, TotaalLevendGeborenKinderen_1) %>% 
+  rename("Jaar" = Perioden_label, "Aantal levend geboren kinderen" = TotaalLevendGeborenKinderen_1) %>% 
+  pivot_wider(names_from = Jaar, values_from = "Aantal levend geboren kinderen") %>% 
+  mutate(Label = "Aantal kinderen") %>% 
+  relocate(Label)
+
+
+gt(data_GeborenKinderen) %>% 
+  # Geen kolomnaam boven "Aantal kinderen"
+  cols_label(matches("Label") ~ "") %>% 
+  # Jaartallen (kolomnamen) en tekst van eerste kolom vetgedrukt
+  tab_style(style = cell_text(weight = "bold"), locations = cells_column_labels()) %>% 
+  tab_style(style = cell_text(weight = "bold"), locations = cells_body(columns = "Label")) %>% 
+  # Bovenste rij gele kleur
+  tab_style(style = cell_fill(color = "#F2F2F2"), locations = cells_column_labels()) %>% 
+  # Per default wordt de tabel gecentreerd op de pagina. Zet deze volledig naar links.
+  tab_options(table.margin.left = 0,
+              table.margin.right = 0,
+              table.width = "100%")
+    
+
+
+  # tab_style(style = cell_fill(color = "#F2F2F2"), locations = cells_column_labels()) %>% 
+  # tab_style(style = cell_fill(color = "#F2F2F2"), locations = cells_body(rows = seq(2, nrow(data_GeborenKinderen), 2)))
+
+
+```
+
+
+```{r, bevolkingsprognose, echo=FALSE, message=F}
+
+geboorteprognose <- read_excel(params$prognose_geboorten_xlsx) %>% 
+  filter(Gemeente %in% params$gemeentenaam) %>% 
+  pull(Gem_geboorte)
+
+```
+
+
+De [bevolkings- en woningbehoefteprognose Noord-Brabant, actualisering 2023](https://bevolkingsprognose.brabant.nl/hoofdstuk/geboorte-en-sterfte-brabant) verwacht tot 2040 jaarlijks rond de `r geboorteprognose` geboorten. 
+
+::: {.legeRegel} 
+:::
+
+```{r bollen, echo=FALSE, message=F}
+
+##################
+# Bol linksboven #
+##################
+
+# Aantal levend geboren kinderen
+# Dit getal is de laatste in de reeks uit de voorgaande grafiek en tabel.
+
+recentst_geboren_kinderen <- data_GeborenKinderen %>% 
+  select(tail(names(.), 1)) %>% 
+  head(1)
+
+# Maak bol met getal aan
+bol_met_getal1 <- knitr::raw_html(bol_met_tekst(getal = recentst_geboren_kinderen, regel1 = "levend geboren kinderen (2021)"))
+
+###################
+# Bol rechtsboven # 
+###################
+
+# Perinatale morbiditeit
+
+# Lees data in
+perinatale_Morbiditeit <- read_excel(params$perinatale_kerncijfers_xlsx) %>% 
+    filter(Onderwerp %in% "Sterfte rond de geboorte vanaf 24 weken zwangerschapsduur (Perinatale mortaliteit) [per 1.000 geboortes]")
+
+# Gemeentelijk cijfer
+perinatale_Morbiditeit_gemeente <- perinatale_Morbiditeit %>% 
+  filter(Gemeente %in% c(params$gemeentenaam)) %>% 
+  select(tail(names(.), 1)) %>% 
+  head(1) %>% 
+  str_replace(",", ".") %>% 
+  as.numeric() 
+
+# Landelijk cijfer
+perinatale_Morbiditeit_landelijk <- perinatale_Morbiditeit %>% 
+  filter(Gemeente %in% c("Nederland")) %>% 
+  select(tail(names(.), 1)) %>% 
+  str_replace(",", ".") %>% 
+  as.numeric() 
+
+# Maak bol met getal aan
+bol_met_getal2 <- knitr::raw_html(bol_met_tekst(getal = perinatale_Morbiditeit_gemeente, 
+                                  regel1 = "van de 1000 kinderen overlijden rond de", 
+                                  regel2 = "geboorte (vanaf 24 weken zwangerschaps-", 
+                                  regel3 = "duur, perinatale mortaliteit) (2021).", 
+                                  regel4 = paste0("Landelijk gaat het om ", perinatale_Morbiditeit_landelijk, " van de 1000"), 
+                                  regel5 = "kinderen."))
+
+##################
+# Bol linksonder #
+##################
+
+# Gemiddeld aantal kinderen per vrouw
+
+# Lees data in
+kinderen_per_vrouw <- read_excel(params$kinderen_per_vrouw_xlsx) %>% 
+  filter(Perioden_label %in% max(as.numeric(Perioden_label))) 
+
+# Gemeentelijk cijfer
+kinderen_per_vrouw_gemeente <- kinderen_per_vrouw %>% 
+  filter(RegioS_label %in% c(params$gemeentenaam)) %>% 
+  pull(GemiddeldKindertalPerVrouw_7) %>% 
+  str_replace(",", ".") %>% 
+  as.numeric() %>% 
+  round2(digits = 1)
+
+# Landelijk cijfer  
+kinderen_per_vrouw_landelijk <- kinderen_per_vrouw %>% 
+  filter(RegioS_label %in% c("Nederland")) %>% 
+  pull(GemiddeldKindertalPerVrouw_7) %>% 
+  str_replace(",", ".") %>% 
+  as.numeric() %>% 
+  round2(digits = 1)
+  
+
+# Maak bol met getal aan
+bol_met_getal3 <- knitr::raw_html(bol_met_tekst(getal = kinderen_per_vrouw_gemeente, 
+                                  regel1 = "gemiddeld aantal kinderen per", 
+                                  regel2 = paste0("vrouw (NL ", kinderen_per_vrouw_landelijk,") (2022)")))
+
+###################
+# Bol rechtsonder # 
+###################
+
+# Vroeggeboortes
+
+# Lees data in
+vroeggeboortes <- read_excel(params$perinatale_kerncijfers_xlsx) %>% 
+    filter(Onderwerp %in% "Vroeggeboorte en/of te laag geboortegewicht (Big 2) [per 1.000 geboortes]") 
+
+# Gemeentelijk cijfer
+vroeggeboortes_gemeente <- vroeggeboortes %>% 
+  filter(Gemeente %in% c(params$gemeentenaam)) %>% 
+  select(tail(names(.), 1)) %>% 
+  pull() %>% 
+  str_replace(",", ".") %>% 
+  as.numeric() %>% 
+  round2(digits = 0)
+
+# Landelijk cijfer
+vroeggeboortes_landelijk <- vroeggeboortes %>% 
+  filter(Gemeente %in% "Nederland") %>% 
+  select(tail(names(.), 1)) %>% 
+  pull() %>% 
+  str_replace(",", ".") %>% 
+  as.numeric() %>% 
+  round2(digits = 0)
+
+# Maak bol met getal aan
+bol_met_getal4 <- knitr::raw_html(bol_met_tekst(getal = vroeggeboortes_gemeente, 
+                                  regel1 = "kinderen die te vroeg geboren zijn", 
+                                  regel2 = "en/of te laag geboortegewicht", 
+                                  regel3 = "hebben (aantal per 1.000 geboortes)", 
+                                  regel4 = paste0("(2020, NL ", vroeggeboortes_landelijk, ")")))
+
+```
+
+### Kerncijfers
+
+:::columns
+
+:::column
+`r bol_met_getal1`
+:::
+:::column
+`r bol_met_getal2`
+:::
+
+:::
+
+:::columns
+
+:::column
+`r bol_met_getal3`
+:::
+:::column
+`r bol_met_getal4`
+:::
+
+:::
+
+## Achtergrondkenmerken {.geleBanner}
+
+### Leeftijd moeder bij geboorte (2022)
+
+```{r grafiek_leeftijd_moeder, echo=FALSE, message=F, fig.height=3}
+
+data_leeftijd_moeder <- read_excel(params$leeftijd_moeder_xlsx) %>% 
+    # Filter naar meest recente jaar
+  mutate(Perioden_label = as.numeric(Perioden_label)) %>% 
+  filter(Perioden_label %in% max(Perioden_label, na.rm = T)) %>% 
+  # Verwijder onnodige kolommen
+  select(-c(TotaalLevendGeborenKinderen_8, JongerDan20Jaar_9, k_20Tot25Jaar_10, k_25Tot30Jaar_11, k_30Tot35Jaar_12, k_35Tot40Jaar_13, k_40Tot45Jaar_14, k_45JaarOfOuder_15)) %>% 
+  # Zet om naar long format om te kunnen plotten
+  pivot_longer(cols = c(`Jonger dan 20`, `20 tot 25 jaar`, `25 tot 30 jaar`, `30 tot 35 jaar`, `35 tot 40 jaar`, `40 tot 45 jaar`, `45 jaar of ouder`), names_to = "Lft") %>% 
+  # Zet de opties uit Lft om naar factor, om de volgorde op de y-as (eigenlijk geroteerde x-as) te kunnen bepalen. 
+  mutate(Lft = factor(Lft, levels = c("45 jaar of ouder", "40 tot 45 jaar", "35 tot 40 jaar", "30 tot 35 jaar", "25 tot 30 jaar", "20 tot 25 jaar", "Jonger dan 20")))
+
+data_leeftijd_moeder <- data_leeftijd_moeder[data_leeftijd_moeder$RegioS_label %in% c(params$gemeentenaam, "Nederland"),]
+
+# Maak van RegioS_label een factor, zodat de volgorde in te stellen valt en de gemeente als staaf boven Nederland eindigt
+data_leeftijd_moeder$RegioS_label <- factor(data_leeftijd_moeder$RegioS_label, levels = c("Nederland", params$gemeentenaam))
+
+ggplotly(
+  ggplot(data_leeftijd_moeder, aes(x = Lft, y = value, fill = RegioS_label)) +
+    geom_col(position = position_dodge(width = 0.8), width = 0.8) +
+    geom_text(data = data_leeftijd_moeder, aes(x = Lft, 
+                               y = if_else(value == 0, 1, value + 2),  
+                               label = paste0(as.character(value), "%")),
+              size = 2.5, 
+              position = position_dodge(width = 0.8)) +
+    coord_flip() + 
+    scale_fill_manual(values= setNames(c("#bebebf", "#fdc715"), c("Nederland", params$gemeentenaam)),
+                      breaks = c(params$gemeentenaam, "Nederland")) + 
+    
+    theme(axis.title = element_blank(),
+          panel.background = element_blank(),
+          axis.text.x = element_blank(),
+          axis.ticks.x = element_blank(),
+          axis.ticks.y = element_blank(),
+          legend.title = element_blank()
+          ),
+  tooltip = NULL
+) %>%
+  config(displayModeBar = FALSE) %>%
+  layout(xaxis = list(fixedrange = TRUE), 
+         yaxis = list(fixedrange = TRUE),
+         legend = list(
+           title = ""
+      )
+         )
+  
+
+
+```
+
+```{r tabel_leeftijd_moeder, echo=FALSE, message=F}
+
+# Bewerk data
+data_leeftijd_moeder <- data_leeftijd_moeder %>% 
+  rename("Gebied" = RegioS_label, "Periode" = Perioden_label) %>% 
+  select(Gebied, Lft, value) %>% 
+  mutate(value = paste0(as.character(value), "%")) %>% 
+  pivot_wider(names_from = Lft, values_from = value)
+
+# Tabel
+gt(data_leeftijd_moeder) %>%
+  # Geen kolomnaam boven eerste kolom
+  cols_label(matches("Gebied") ~ "") %>% 
+  # Jaartallen (kolomnamen) en tekst van eerste kolom vetgedrukt
+  tab_style(style = cell_text(weight = "bold"), locations = cells_column_labels()) %>% 
+  tab_style(style = cell_text(weight = "bold"), locations = cells_body(columns = "Gebied")) %>% 
+  # Bovenste rij gele kleur
+  tab_style(style = cell_fill(color = "#F2F2F2"), locations = cells_column_labels()) %>% 
+  # Per default wordt de tabel gecentreerd op de pagina. Zet deze volledig naar links.
+  tab_options(table.margin.left = 0,
+              table.margin.right = 0,
+              table.width = "100%") %>% 
+  # Gebied is een factor, en wordt daardoor niet automatisch links uitgelijnd, zoals wel bij de tekstkolommen van andere tabellen gebeurt.
+  cols_align(align = "left",
+             columns = Gebied)
+```
+
+
+### Huishoudsamenstelling
+
+```{r huishoudsamenstelling, echo=FALSE, message=F}
+
+#####################
+# Percentage gehuwd #
+#####################
+
+percentage_gehuwd <- read_excel(params$gehuwd_xlsx) %>% 
+  filter(Perioden_label %in% max(as.numeric(Perioden_label))) %>% 
+  select(-SamenstellingHuishouden) %>% 
+  pivot_wider(names_from = "SamenstellingHuishouden_label", values_from = "LevendGeborenKinderen_1") %>% 
+  mutate(Percentage = round2(`Gehuwd paar` / `Totaal huishoudens` * 100, digits = 0))
+
+percentage_gehuwd_gemeente <- percentage_gehuwd %>% 
+  filter(RegioS_label %in% params$gemeentenaam) %>%
+  pull(Percentage)
+
+percentage_gehuwd_landelijk <- percentage_gehuwd %>% 
+  filter(RegioS_label %in% "Nederland") %>%
+  pull(Percentage)
+  
+
+# Schrijf weg om later in tekst op te nemen
+gehuwd <- knitr::raw_html(paste0('<span style="color:#fdc715">', 
+                                 percentage_gehuwd_gemeente,
+                                 '%</span> van de moeders van levend geboren kinderen is gehuwd. In heel Nederland is dit ',
+                                 percentage_gehuwd_landelijk,
+                                 '% (2022).'))
+
+
+
+#########################
+# Huishoudsamenstelling #
+#########################
+
+data_woonsituatie <- read_excel(params$woonsituatie_xlsx) 
+
+###
+## Kind woont bij vader en moeder
+
+# Gemeentelijk cijfer
+kind_woont_ouders_gemeente <- data_woonsituatie %>% 
+  filter(Gemeente %in% params$gemeentenaam) %>%
+  pull(`bij vader en moeder (0-11 jaar)`) * 100
+
+# Regionaal cijfer
+kind_woont_ouders_GGDHVB <- data_woonsituatie %>% 
+  filter(Gemeente %in% "Hart voor Brabant") %>%
+  pull(`bij vader en moeder (0-11 jaar)`) * 100
+
+###
+## Kind woont in eenoudergezin
+
+# Gemeentelijk cijfer
+kind_woont_eenouder_gemeente <- data_woonsituatie %>% 
+  filter(Gemeente %in% params$gemeentenaam) %>%
+  pull(`in éénoudergezin (0-11 jaar)`) * 100
+
+# Regionaal cijfer
+kind_woont_eenouder_GGDHVB <- data_woonsituatie %>% 
+  filter(Gemeente %in% "Hart voor Brabant") %>%
+  pull(`in éénoudergezin (0-11 jaar)`) * 100
+
+###
+## Kind woont deels bij vader en deels bij moeder
+
+# Gemeentelijk cijfer
+kind_woont_deels_ouders_gemeente <- data_woonsituatie %>% 
+  filter(Gemeente %in% params$gemeentenaam) %>%
+  pull(`deels bij moeder en deels bij vader (0-11 jaar)`) * 100
+
+# Regionaal cijfer
+kind_woont_deels_ouders_GGDHVB <- data_woonsituatie %>% 
+  filter(Gemeente %in% "Hart voor Brabant") %>%
+  pull(`deels bij moeder en deels bij vader (0-11 jaar)`) * 100
+  
+# Schrijf weg om later in de tekst te kunnen gebruiken
+huishoudsamenstelling <- knitr::raw_html(paste0('<span style="color:#fdc715">', 
+                                         kind_woont_ouders_gemeente,
+                                         '%</span> van de ouders van kinderen tussen 0 en 11 jaar geeft aan dat kind bij vader en moeder woont, <span 
+                                         style="color:#fdc715">', 
+                                         kind_woont_eenouder_gemeente, 
+                                         '%</span> in een eenoudergezin, <span style="color:#fdc715">',
+                                         kind_woont_deels_ouders_gemeente,
+                                         '%</span> deels bij vader en deels bij moeder (2021). In de regio GGD Hart van Brabant is dat respectievelijk ',
+                                         kind_woont_ouders_GGDHVB,
+                                         '%, ',
+                                         kind_woont_eenouder_GGDHVB,
+                                         '% en ',
+                                         kind_woont_deels_ouders_GGDHVB,
+                                         '%.'))
+
+```
+
+::: {layout="[[10,90],[-100], [-10, 90]]" layout-valign="bottom"}
+![](input/Afbeeldingen/trouwringen.svg){fig-alt="Afbeelding van trouwringen"}
+
+`r gehuwd`
+
+`r huishoudsamenstelling`
+:::
+
+### Inkomen
+
+```{r inkomen, echo=FALSE, message=F}
+
+###########
+# Inkomen #
+###########
+
+# Lees data in
+data_inkomen <- read_excel(params$inkomen_xlsx) %>% 
+  mutate(ParticuliereHuishoudensRelatief_4 = round2(ParticuliereHuishoudensRelatief_4, digits = 0)) %>% 
+  filter(Perioden_label %in% max(as.numeric(Perioden_label)))
+
+# Gemeentelijk cijfer  
+data_inkomen_gemeente <- data_inkomen %>% 
+  filter(RegioS_label %in% params$gemeentenaam) %>% 
+  pull(ParticuliereHuishoudensRelatief_4)
+
+# Landelijk cijfer
+data_inkomen_landelijk <- data_inkomen %>% 
+  filter(RegioS_label %in% "Nederland") %>% 
+  pull(ParticuliereHuishoudensRelatief_4)
+
+# Schrijf weg om later te kunnen gebruiken in de tekst
+inkomen <- knitr::raw_html(paste0('<span style="color:#fdc715">',
+                           data_inkomen_gemeente,
+                           '%</span> van de particuliere huishoudens heeft al tenminste 1 jaar een inkomen onder het sociaal minimum (2020). In heel Nederland 
+                           is dit ',
+                           data_inkomen_landelijk,
+                           '%.'))
+
+
+##############
+# Geldgebrek #
+##############
+
+# Lees data in
+data_geldgebrek <- read_excel(params$geldgebrek_xlsx) %>% 
+  mutate(`Geldgebrek risicovol gezondheid kind` = round2(`Geldgebrek risicovol gezondheid kind` * 100, digits = 0)) 
+
+# Gemeentelijk cijfer
+geldgebrek_gemeente <- data_geldgebrek %>% 
+  filter(Gemeente %in% params$gemeentenaam) %>% 
+  pull(`Geldgebrek risicovol gezondheid kind`)
+
+# Cijfer van de regio
+geldgebrek_GGDHVB <- data_geldgebrek %>% 
+  filter(Gemeente %in% "Hart voor Brabant") %>% 
+  pull(`Geldgebrek risicovol gezondheid kind`)
+
+# Schrijf weg om later te kunnen gebruiken in de tekst
+geldgebrek <- knitr::raw_html(paste0('<span style="color:#fdc715">',
+                                     geldgebrek_gemeente,
+                                     '%</span> van de ouders van kinderen tussen 0 en 11 jaar geeft aan 
+                                     dat geldgebrek risicovol is voor de gezondheid of het
+                                     welbevinden van het kind (2021). In de regio GGD Hart van Brabant is dit ', 
+                                     geldgebrek_GGDHVB,
+                                     '%.'))
+
+```
+
+::: {layout="[[10,90],[-100], [-10, 90]]" layout-valign="bottom"}
+![](input/Afbeeldingen/geld.svg){fig-alt="Afbeelding van geld"}
+
+`r inkomen`
+
+`r geldgebrek`
+:::
+
+### Opleiding
+
+```{r opleiding, echo=FALSE, message=F}
+
+data_opleiding <- read_excel(params$opleiding_xlsx) %>% 
+  mutate(`Ouders zijn laag/midden opgeleid (MAVO, MBO) (0-11 jaar)` = round2(`Ouders zijn laag/midden opgeleid (MAVO, MBO) (0-11 jaar)` * 100, digits = 0)) 
+
+
+# Gemeentelijk cijfer
+opleiding_gemeente <- data_opleiding %>% 
+  filter(Gemeente %in% params$gemeentenaam) %>% 
+  pull(`Ouders zijn laag/midden opgeleid (MAVO, MBO) (0-11 jaar)`)
+
+# Cijfer van de regio
+opleiding_GGDHVB <- data_opleiding %>% 
+  filter(Gemeente %in% "Hart voor Brabant") %>% 
+  pull(`Ouders zijn laag/midden opgeleid (MAVO, MBO) (0-11 jaar)`)
+
+# Schrijf weg om later te kunnen gebruiken in de tekst
+opleiding <- knitr::raw_html(paste0('Bij <span style="color:#fdc715">',
+                                    opleiding_gemeente,
+                                    '%</span> van de kinderen tussen 0 en 11 jaar hebben beide ouders 
+                                    maximaal een MAVO/MBO-opgeleiding afgerond (2021). In de regio 
+                                    GGD Hart voor Brabant is dit ',
+                                    opleiding_GGDHVB,
+                                    '%.'))
+
+
+```
+
+::: {layout="[10,90]" layout-valign="bottom"}
+![](input/Afbeeldingen/opleiding.svg){fig-alt="Afbeelding van een diploma"}
+
+`r opleiding`
+:::
+
+
+### Etniciteit 0-11 jaar (2021)
+
+```{r etniciteit, echo=FALSE, message=F, fig.height = 3, out.width="100%"}
+
+data_etniciteit <- read_excel(params$etniciteit_xlsx) %>% 
+  rename("Nederlandse achtergrond" = `Nederlandse achtergrond (beide ouders in Nederland geboren) (0-11 jaar)`,
+         "Westerse migratieachtergrond" = `Westerse migratieachtergrond (0-11 jaar)`,
+         "Niet-westerse migratieachtergrond" = `Niet-Westerse migratieachtergrond (0-11 jaar)`
+         ) %>% 
+  filter(Gemeente %in% c(params$gemeentenaam, "Hart voor Brabant")) %>% 
+  pivot_longer(cols = c(`Nederlandse achtergrond`, `Westerse migratieachtergrond`, `Niet-westerse migratieachtergrond`),
+               names_to = "Achtergrond",
+               values_to = "Percentage") %>% 
+  mutate(Percentage = Percentage * 100,
+         Achtergrond = factor(Achtergrond, levels = c("Nederlandse achtergrond", "Westerse migratieachtergrond", "Niet-westerse migratieachtergrond")))
+  
+ggplotly(
+  ggplot() +
+    geom_col(data = data_etniciteit, aes(x = Achtergrond, y = Percentage, fill = Gemeente), position = position_dodge(width=0.5), width = 0.5) + 
+    geom_text(data = data_etniciteit, aes(x = Achtergrond, y = Percentage + 5, group = Gemeente, label = paste0(Percentage, "%")),
+              position = position_dodge(width=0.5),
+              size = 3) +
+    scale_fill_manual(values = c("#fec80f", "#bebebf")) +
+    theme(legend.title=element_blank(),
+          legend.position ="top",
+          axis.title = element_blank(),
+          panel.background = element_blank(),
+          axis.ticks.x = element_blank(),
+          axis.ticks.y = element_blank(),
+          axis.text.y = element_blank()),
+  tooltip = NULL
+  ) %>%
+  config(displayModeBar = FALSE) %>%
+  layout(xaxis = list(fixedrange = TRUE), 
+         yaxis = list(fixedrange = TRUE),
+         legend = list(
+           orientation = "h",
+           title = ""
+      ))
+
+
+  
+
+```
+
+
+```{r etniciteit_tabel, echo=FALSE, message=F, fig.height = 3, out.width="100%"}
+
+data_etniciteit_tabel <- data_etniciteit %>% 
+  mutate(Percentage = paste0(as.character(Percentage), "%")) %>% 
+  pivot_wider(names_from = "Achtergrond", values_from = "Percentage")
+  
+gt(data_etniciteit_tabel) %>% 
+  # Geen kolomnaam boven "Gemeente/Nederland"
+  cols_label(matches("Gemeente") ~ "") %>% 
+  # Jaartallen (kolomnamen) en tekst van eerste kolom vetgedrukt
+  tab_style(style = cell_text(weight = "bold"), locations = cells_column_labels()) %>% 
+  tab_style(style = cell_text(weight = "bold"), locations = cells_body(columns = "Gemeente")) %>% 
+  # Bovenste rij gele kleur
+  tab_style(style = cell_fill(color = "#F2F2F2"), locations = cells_column_labels()) %>% 
+  # Per default wordt de tabel gecentreerd op de pagina. Zet deze volledig naar links.
+  tab_options(table.margin.left = 0,
+              table.margin.right = 0,
+              table.width = "100%")
+  
+```
+
+## Tijdens de zwangerschap {.geleBanner}
+
+### Zwangerschapsbegeleiding
+
+```{r begeleiding, echo=FALSE, message=F}
+
+# Lees data in
+data_begeleiding <- read_excel(params$perinatale_kerncijfers_xlsx) %>% 
+    filter(Onderwerp %in% "Zwangerschapsbegeleiding gestart voor 10 weken van de zwangerschap [per 100 geboortes]") 
+
+# Gemeentelijk cijfer
+data_begeleiding_gemeente <- data_begeleiding %>% 
+  filter(Gemeente %in% c(params$gemeentenaam)) %>% 
+  select(tail(names(.), 1)) %>% 
+  pull() %>% 
+  str_replace(",", ".") %>% 
+  as.numeric() %>% 
+  round2(digits = 0)
+
+# Landelijk cijfer
+data_begeleiding_landelijk <- data_begeleiding %>% 
+  filter(Gemeente %in% "Nederland") %>% 
+  select(tail(names(.), 1)) %>% 
+  pull() %>% 
+  str_replace(",", ".") %>% 
+  as.numeric() %>% 
+  round2(digits = 0)
+
+
+# Schrijf weg om later te kunnen gebruiken in de tekst
+begeleiding <- knitr::raw_html(paste0('Bij <span style="color:#fdc715">',
+                                      data_begeleiding_gemeente,
+                                      '</span> van de <span style="color:#fdc715">100</span> geboortes is de zwangerschapsbegeleiding al gestart vóór de 
+                                      tiende week van de zwangerschap (2020). In heel Nederland is dit bij ',
+                                      data_begeleiding_landelijk,' van de 100 geboortes het geval.'))
+
+
+```
+
+::: {layout="[10,90]" layout-valign="bottom"}
+![](input/Afbeeldingen/zwanger_geel.svg){fig-alt="Afbeelding van een zwangere vrouw"}
+
+`r begeleiding`
+:::
+
+### Roken
+
+```{r roken, echo=FALSE, message=F}
+
+# Lees data in
+moeder_niet_gerookt <- read_excel(params$moeder_niet_gerookt_xlsx) %>% 
+  mutate(`Moeder heeft niet gerookt tijdens de zwangerschap (0-11 jaar)` = round2(`Moeder heeft niet gerookt tijdens de zwangerschap (0-11 jaar)` * 100, digits = 0))
+
+# Gemeentelijk cijfer
+moeder_niet_gerookt_gemeente <- moeder_niet_gerookt %>% 
+  filter(Gemeente %in% params$gemeentenaam) %>% 
+  pull(`Moeder heeft niet gerookt tijdens de zwangerschap (0-11 jaar)`)
+
+# Cijfer van de regio
+moeder_niet_gerookt_GGDHVB <- moeder_niet_gerookt %>% 
+  filter(Gemeente %in% "Hart voor Brabant") %>% 
+  pull(`Moeder heeft niet gerookt tijdens de zwangerschap (0-11 jaar)`)
+
+# Schrijf weg om later te kunnen gebruiken in de tekst
+roken <- knitr::raw_html(paste0('<span style="color:#fdc715">', 
+                                moeder_niet_gerookt_gemeente,
+                                '%</span> van de moeders heeft niet gerookt tijdens de zwangerschap (2021). In de regio GGD Hart voor Brabant is dit ',
+                                moeder_niet_gerookt_GGDHVB,
+                                '%.'))
+
+
+```
+
+::: {layout="[10,90]" layout-valign="bottom"}
+![](input/Afbeeldingen/sigaret.svg){fig-alt="Afbeelding van een sigaret"}
+
+`r roken`
+:::
+
+### Alcohol
+
+```{r alcohol, echo=FALSE, message=F}
+
+# Lees data in
+moeder_geen_alcohol <- read_excel(params$moeder_geen_alcohol) %>% 
+  mutate(`Moeder heeft geen alcohol gebruikt tijdens de zwangerschap (0-11 jaar)` = round2(`Moeder heeft geen alcohol gebruikt tijdens de zwangerschap (0-11 jaar)` * 100, digits = 0))
+         
+
+# Gemeentelijk cijfer
+moeder_geen_alcohol_gemeente <- moeder_geen_alcohol %>% 
+  filter(Gemeente %in% params$gemeentenaam) %>% 
+  pull(`Moeder heeft geen alcohol gebruikt tijdens de zwangerschap (0-11 jaar)`)
+
+# Cijfer van de regio
+moeder_geen_alcohol_GGDHVB <- moeder_geen_alcohol %>% 
+  filter(Gemeente %in% "Hart voor Brabant") %>% 
+  pull(`Moeder heeft geen alcohol gebruikt tijdens de zwangerschap (0-11 jaar)`)
+
+
+# Schrijf weg om later te kunnen gebruiken in de tekst
+alcohol <- knitr::raw_html(paste0('<span style="color:#fdc715">',
+                                  moeder_geen_alcohol_gemeente,
+                                  '%</span> van de moeders heeft geen alcohol gebruikt tijdens de zwangerschap (2021). In de regio GGD Hart voor 
+                                  Brabant is dit ',
+                                  moeder_geen_alcohol_GGDHVB,
+                                  '%.'))
+
+
+```
+
+::: {layout="[10,90]" layout-valign="bottom"}
+![](input/Afbeeldingen/alcohol.svg){fig-alt="Afbeelding van een fles en 2 glazen"}
+
+`r alcohol`
+:::
+
+## Na de zwangerschap {.geleBanner}
+
+### Gewicht
+
+```{r gewicht, echo=FALSE, message=F}
+
+# Lees data in
+gewicht <- read_excel(params$overgewicht_2jarigen_xlsx) %>% 
+  mutate(`overgewicht inclusief obesitas` = round2(`overgewicht inclusief obesitas` * 100, digits = 0),
+         obesitas = round2(obesitas * 100, digits = 0))
+         
+
+# Gemeentelijk cijfer, overgewicht
+overgewicht_gemeente <- gewicht %>% 
+  filter(Gemeente %in% params$gemeentenaam) %>% 
+  pull(`overgewicht inclusief obesitas`)
+
+# Regiocijfer, overgewicht
+overgewicht_GGDHvB <- gewicht %>% 
+  filter(Gemeente %in% "Hart voor Brabant") %>% 
+  pull(`overgewicht inclusief obesitas`)
+
+# Schrijf weg om later te kunnen gebruiken in de tekst
+overgewicht <- knitr::raw_html(paste0('<span style="color:#fdc715">',
+                                      overgewicht_gemeente,
+                                      '%</span> van de tweejarigen heeft overgewicht (inclusief obesitas; 2021). In de regio GGD Hart voor 
+                                      Brabant is dit Nederland is dit ',
+                                      overgewicht_GGDHvB,
+                                      '%.'))
+
+# Gemeentelijk cijfer, obesitas
+obesitas_gemeente <- gewicht %>% 
+  filter(Gemeente %in% params$gemeentenaam) %>% 
+  pull(`obesitas`)
+
+# Regiocijfer, obesitas
+obesitas_GGDHvB <- gewicht %>% 
+  filter(Gemeente %in% "Hart voor Brabant") %>% 
+  pull(`obesitas`)
+
+# Schrijf weg om later te kunnen gebruiken in de tekst
+obesitas <- knitr::raw_html(paste0('<span style="color:#fdc715">',
+                                   obesitas_gemeente,
+                                   '%</span> van de tweejarigen heeft obesitas (2021). In de regio GGD Hart voor Brabant is dit Nederland is dit ',
+                                   obesitas_GGDHvB,
+                                   '%.'))
+
+```
+
+::: {layout="[[10,90],[-100], [-10, 90]]" layout-valign="bottom"}
+![](input/Afbeeldingen/weegschaal.svg){fig-alt="Afbeelding van een weegschaal"}
+
+`r overgewicht`
+
+`r obesitas`
+:::
+
+### Spraak/taalontwikkeling
+
+```{r spraaktaal, echo=FALSE, message=F}
+
+# Lees data in
+data_spraaktaal <- read_excel(params$spraaktaal_xlsx) %>% 
+  filter(GemeenteOfficieel %in% params$gemeenten_hvb)
+
+# Bereken percentage "Langzaam" tov totaal per gemeente en haal cijfer voor gemeente op
+spraaktaal_gemeente <- data_spraaktaal %>% 
+  group_by(GemeenteOfficieel, WAARDE) %>% 
+  summarize(Aantal = n()) %>% 
+  pivot_wider(names_from = WAARDE, values_from = Aantal) %>% 
+  mutate(Totaal = sum(Langzaam, `Leeftijdsadequaat of sneller`),
+         Percentage = round2(Langzaam / Totaal * 100, digits = 0)) %>% 
+  filter(GemeenteOfficieel %in% params$gemeentenaam) %>% 
+  pull(Percentage)
+
+# Bereken percentage "Langzaam" tov totaal voor de hele regio en haal cijfer op
+spraaktaal_GGDHvB <- data_spraaktaal %>% 
+  group_by(WAARDE) %>% 
+  summarize(Aantal = n()) %>% 
+  pivot_wider(names_from = WAARDE, values_from = Aantal) %>% 
+  mutate(Totaal = sum(Langzaam, `Leeftijdsadequaat of sneller`),
+         Percentage = round2(Langzaam / Totaal * 100, digits = 0)) %>% 
+  pull(Percentage)
+
+# Schrijf weg om later te kunnen gebruiken in de tekst
+spraaktaal <- knitr::raw_html(paste0('<span style="color:#fdc715">',
+                                     spraaktaal_gemeente,
+                                     '%</span> van de tweejarigen heeft een negatieve score op de spraak/taalontwikkeling (2021). 
+                                     In de regio GGD Hart voor Brabant is ',
+                                     spraaktaal_GGDHvB,
+                                     '%.'))
+
+
+```
+
+::: {layout="[10,90]" layout-valign="bottom"}
+![](input/Afbeeldingen/spraak.svg){fig-alt="Afbeelding van twee personen die met elkaar praten"}
+
+`r spraaktaal`
+
+:::
+
+
+### Borstvoeding
+
+```{r borstvoeding, echo=FALSE, message=F}
+
+###########
+# 4 weken #
+###########
+
+# Lees data in
+borstvoeding <- read_excel(params$borstvoeding_xlsx) %>% 
+  filter(GemeenteOfficieel %in% params$gemeenten_hvb, 
+         
+         
+         
+         ## Deze filter moet waarschijnlijk aangepast worden bij nieuwe datalevering
+         CONTACTMOMENT_TYPE %in% c("CB 4 weken JA", "4 weken JA 25 CB (4wJA25)", "CB 3 maanden JA", "3 maanden JA 25 CB (3mJA25)", "CB 6 maanden JA")) %>% 
+  
+  mutate(Contactmoment = recode(CONTACTMOMENT_TYPE, 
+                                "CB 4 weken JA" = "4 weken",
+                                "4 weken JA 25 CB (4wJA25)" = "4 weken",
+                                "CB 3 maanden JA" = "3 maanden", 
+                                "3 maanden JA 25 CB (3mJA25)" = "3 maanden",
+                                "CB 6 maanden JA" = "6 maanden"
+                                   ),
+         Voeding= case_when(WAARDE %in% "Borstvoeding" ~ "Uitsluitend borstvoeding",
+                            TRUE ~ "Niet uitsluitend borstvoeding"))
+
+# Gemeentelijk cijfer, 4 weken
+voeding_4weken_gemeente <- borstvoeding %>% 
+  filter(Contactmoment %in% "4 weken") %>% 
+  group_by(GemeenteOfficieel, Voeding) %>% 
+  summarize(Aantal = n()) %>% 
+  pivot_wider(names_from = Voeding, values_from = Aantal) %>% 
+  # Bereken percentage uitsluitend borstvoeding
+  mutate(Percentage = round2(`Uitsluitend borstvoeding` / (`Uitsluitend borstvoeding` + `Niet uitsluitend borstvoeding`) * 100, digits = 0)) %>% 
+  filter(GemeenteOfficieel %in% params$gemeentenaam) %>% 
+  pull(Percentage)
+  
+# Regio cijfer, 4 weken
+voeding_4weken_GGDHvB <- borstvoeding %>% 
+  filter(Contactmoment %in% "4 weken") %>% 
+  group_by(Voeding) %>% 
+  summarize(Aantal = n()) %>% 
+  pivot_wider(names_from = Voeding, values_from = Aantal) %>% 
+  # Bereken percentage uitsluitend borstvoeding
+  mutate(Percentage = round2(`Uitsluitend borstvoeding` / (`Uitsluitend borstvoeding` + `Niet uitsluitend borstvoeding`) * 100, digits = 0)) %>% 
+  pull(Percentage)
+
+# Schrijf weg om later te kunnen gebruiken in de tekst
+borstvoeding_4weken <- knitr::raw_html(paste0('<span style="color:#fdc715">',
+                                              voeding_4weken_gemeente,
+                                              '%</span> van de kinderen krijgt uitsluitend borstvoeding (gevraagd tijdens het contactmoment met de 
+                                              jeugdarts bij <span style="font-weight:bold">4 weken</span>, 2021). In de regio GGD Hart voor Brabant is dit ',
+                                              voeding_4weken_GGDHvB,
+                                              '%.'))
+
+
+#############
+# 3 maanden #
+#############
+
+# Gemeentelijk cijfer, 3 maanden
+voeding_3maanden_gemeente <- borstvoeding %>% 
+  filter(Contactmoment %in% "3 maanden") %>% 
+  group_by(GemeenteOfficieel, Voeding) %>% 
+  summarize(Aantal = n()) %>% 
+  pivot_wider(names_from = Voeding, values_from = Aantal) %>% 
+  # Bereken percentage uitsluitend borstvoeding
+  mutate(Percentage = round2(`Uitsluitend borstvoeding` / (`Uitsluitend borstvoeding` + `Niet uitsluitend borstvoeding`) * 100, digits = 0)) %>% 
+  filter(GemeenteOfficieel %in% params$gemeentenaam) %>% 
+  pull(Percentage)
+  
+# Regio cijfer, 3 maanden
+voeding_3maanden_GGDHvB <- borstvoeding %>% 
+  filter(Contactmoment %in% "3 maanden") %>% 
+  group_by(Voeding) %>% 
+  summarize(Aantal = n()) %>% 
+  pivot_wider(names_from = Voeding, values_from = Aantal) %>% 
+  # Bereken percentage uitsluitend borstvoeding
+  mutate(Percentage = round2(`Uitsluitend borstvoeding` / (`Uitsluitend borstvoeding` + `Niet uitsluitend borstvoeding`) * 100, digits = 0)) %>% 
+  pull(Percentage)
+
+
+# Schrijf weg om later te kunnen gebruiken in de tekst
+borstvoeding_3maanden <- knitr::raw_html(paste0('<span style="color:#fdc715">',
+                                         voeding_3maanden_gemeente,
+                                         '%</span> van de kinderen krijgt uitsluitend borstvoeding (gevraagd tijdens het contactmoment met de 
+                                         jeugdarts bij <span style="font-weight:bold">3 maanden</span>, 2021). In de regio GGD Hart voor Brabant is dit ',
+                                         voeding_3maanden_GGDHvB,
+                                         '%.'))
+
+
+#############
+# 6 maanden #
+#############
+
+# Gemeentelijk cijfer, 6 maanden
+voeding_6maanden_gemeente <- borstvoeding %>% 
+  filter(Contactmoment %in% "6 maanden") %>% 
+  group_by(GemeenteOfficieel, Voeding) %>% 
+  summarize(Aantal = n()) %>% 
+  pivot_wider(names_from = Voeding, values_from = Aantal) %>% 
+  # Bereken percentage uitsluitend borstvoeding
+  mutate(Percentage = round2(`Uitsluitend borstvoeding` / (`Uitsluitend borstvoeding` + `Niet uitsluitend borstvoeding`) * 100, digits = 0)) %>% 
+  filter(GemeenteOfficieel %in% params$gemeentenaam) %>% 
+  pull(Percentage)
+  
+# Regio cijfer, 6 maanden
+voeding_6maanden_GGDHvB <- borstvoeding %>% 
+  filter(Contactmoment %in% "6 maanden") %>% 
+  group_by(Voeding) %>% 
+  summarize(Aantal = n()) %>% 
+  pivot_wider(names_from = Voeding, values_from = Aantal) %>% 
+  # Bereken percentage uitsluitend borstvoeding
+  mutate(Percentage = round2(`Uitsluitend borstvoeding` / (`Uitsluitend borstvoeding` + `Niet uitsluitend borstvoeding`) * 100, digits = 0)) %>% 
+  pull(Percentage)
+
+# Schrijf weg om later te kunnen gebruiken in de tekst
+borstvoeding_6maanden <- knitr::raw_html(paste0('<span style="color:#fdc715">',
+                                                voeding_6maanden_gemeente,
+                                                '%</span> van de kinderen krijgt uitsluitend borstvoeding (gevraagd tijdens het contactmoment met de 
+                                                jeugdarts bij <span style="font-weight:bold">6 maanden</span>, 2021). In de regio GGD Hart voor Brabant is dit ',
+                                                voeding_6maanden_GGDHvB,
+                                                '%.'))
+
+```
+
+::: {layout="[[10,90],[-100],[-10, 90],[-100], [-10, 90]]" layout-valign="bottom"}
+![](input/Afbeeldingen/borstvoeding.svg){fig-alt="Afbeelding van een vrouw die borstvoeding geeft"}
+
+`r borstvoeding_4weken`
+
+`r borstvoeding_3maanden`
+
+`r borstvoeding_6maanden`
+
+:::
+
+### Leefstijl
+
+```{r sigarettenrook, echo=FALSE, message=F}
+
+# Lees data in
+data_sigarettenrook <- read_excel(params$sigarettenrook_xlsx) %>% 
+  mutate(`Kind is in de afgelopen 7 dagen in huis aan (sigaretten)rook blootgesteld (0-11 jaar)` = `Kind is in de afgelopen 7 dagen in huis aan (sigaretten)rook blootgesteld (0-11 jaar)` * 100)
+         
+  
+# Gemeentelijk cijfer
+sigarettenrook_gemeente <- data_sigarettenrook %>% 
+  filter(Gemeente %in% params$gemeentenaam) %>% 
+  pull(`Kind is in de afgelopen 7 dagen in huis aan (sigaretten)rook blootgesteld (0-11 jaar)`)
+
+# Cijfer van de regio
+sigarettenrook_GGDHVB <- data_sigarettenrook %>% 
+  filter(Gemeente %in% "Hart voor Brabant") %>% 
+  pull(`Kind is in de afgelopen 7 dagen in huis aan (sigaretten)rook blootgesteld (0-11 jaar)`)
+
+# Schrijf weg om later te kunnen gebruiken in de tekst
+sigarettenrook <- knitr::raw_html(paste0('<span style="color:#fdc715">',
+                                  sigarettenrook_gemeente,
+                                  '%</span> van de kinderen tussen 0 en 11 jaar is in de afgelopen 7 dagen blootgesteld aan sigarettenrook (2021). 
+                                  In de regio GGD Hart voor Brabant is dit ',
+                                  sigarettenrook_GGDHVB,
+                                  '%.'))
+
+
+```
+
+::: {layout="[10,90]" layout-valign="bottom"}
+![](input/Afbeeldingen/sigaret2.svg){fig-alt="Afbeelding van een brandende sigaret"}
+
+`r sigarettenrook`
+
+:::
+
+::: {.legeRegel} 
+:::
+
+```{r schermtijd, echo=FALSE, message=F}
+
+# Lees data in
+data_schermtijd <- read_excel(params$schermtijd_xlsx)  %>% 
+  mutate(`Kind kijkt meer dan 2 uur per dag tv/computer/tablet/smarthpone (1-11 jaar)` = `Kind kijkt meer dan 2 uur per dag tv/computer/tablet/smarthpone (1-11 jaar)` * 100)
+  
+# Gemeentelijk cijfer
+schermtijd_gemeente <- data_schermtijd %>% 
+  filter(Gemeente %in% params$gemeentenaam) %>% 
+  pull(`Kind kijkt meer dan 2 uur per dag tv/computer/tablet/smarthpone (1-11 jaar)`)
+
+# Cijfer van de regio
+schermtijd_GGDHVB <- data_schermtijd %>% 
+  filter(Gemeente %in% "Hart voor Brabant") %>% 
+  pull(`Kind kijkt meer dan 2 uur per dag tv/computer/tablet/smarthpone (1-11 jaar)`)
+
+
+# Schrijf weg om later te kunnen gebruiken in de tekst
+schermtijd <- knitr::raw_html(paste0('<span style="color:#fdc715">',
+                                     schermtijd_gemeente,
+                                     '%</span> van de kinderen tussen 1 en 11 jaar kijkt meer dan 2 uur per dag naar een scherm, 
+                                     zoals een tv, computer, tablet of smarthpone (2021). In de regio GGD Hart voor Brabant is dit ',
+                                     schermtijd_GGDHVB,
+                                     '%.'))
+
+
+```
+
+::: {layout="[10,90]" layout-valign="bottom"}
+![](input/Afbeeldingen/tablet.svg){fig-alt="Afbeelding van een digitaal scherm"}
+
+`r schermtijd`
+
+:::
+
+::: {.legeRegel} 
+:::
+
+```{r buitenspelen, echo=FALSE, message=F}
+
+# Lees data in
+data_buitenspelen <- read_excel(params$buitenspelen_xlsx) %>% 
+  mutate(`Kind speelt niet of weinig buiten (1-11 jaar)` = `Kind speelt niet of weinig buiten (1-11 jaar)` * 100) 
+  
+  
+# Gemeentelijk cijfer
+buitenspelen_gemeente <- data_buitenspelen %>% 
+  filter(Gemeente %in% params$gemeentenaam) %>% 
+  pull(`Kind speelt niet of weinig buiten (1-11 jaar)`)
+
+# Cijfer van de regio
+buitenspelen_GGDHVB <- data_buitenspelen %>% 
+  filter(Gemeente %in% "Hart voor Brabant") %>% 
+  pull(`Kind speelt niet of weinig buiten (1-11 jaar)`)
+
+
+# Schrijf weg om later te kunnen gebruiken in de tekst
+buitenspelen <- knitr::raw_html(paste0('<span style="color:#fdc715">',
+                                       buitenspelen_gemeente,
+                                       '%</span> van de kinderen tussen 1 en 11 jaar speelt weinig buiten (2021). In de regio GGD Hart voor Brabant is dit ',
+                                       buitenspelen_GGDHVB,
+                                       '%.'))
+
+
+```
+
+::: {layout="[10,90]" layout-valign="bottom"}
+![](input/Afbeeldingen/schommel.svg){fig-alt="Afbeelding van een schommel"}
+
+`r buitenspelen`
+
+:::
+
+### Eetgewoonten
+
+```{r dagelijks_ontbijt, echo=FALSE, message=F}
+
+
+# Lees data in
+data_ontbijt <- read_excel(params$dagelijks_ontbijt_xlsx) %>% 
+  mutate(across(where(is.numeric), ~ .x * 100))
+
+# Gemeentelijk cijfer
+ontbijt_gemeente <- data_ontbijt %>% 
+  filter(Gemeente %in% params$gemeentenaam) %>% 
+  pull(`ontbijt dagelijks (1-11 jaar)`)
+
+# Cijfer van de regio
+ontbijt_GGDHVB <- data_ontbijt %>% 
+  filter(Gemeente %in% "Hart voor Brabant") %>% 
+  pull(`ontbijt dagelijks (1-11 jaar)`)
+
+
+# Schrijf weg om later te kunnen gebruiken in de tekst
+dagelijks_ontbijt <- knitr::raw_html(paste0('<span style="color:#fdc715">',
+                                       ontbijt_gemeente,
+                                       '%</span> van de kinderen tussen 1 en 11 jaar ontbijt dagelijks (2021). In de regio GGD Hart voor Brabant is dit ',
+                                       ontbijt_GGDHVB,
+                                       '%.'))
+```
+
+
+
+::: {layout="[10,90]" layout-valign="bottom"}
+![](input/Afbeeldingen/breakfast.svg){fig-alt="Afbeelding van ontbijt"}
+
+`r dagelijks_ontbijt`
+
+:::
+
+::: {.legeRegel} 
+:::
+
+```{r dagelijks_warme_maaltijd, echo=FALSE, message=F}
+
+
+# Lees data in
+data_warme_maaltijd <- read_excel(params$dagelijks_warme_maaltijd_xlsx) %>% 
+  mutate(across(where(is.numeric), ~ .x * 100))
+
+# Gemeentelijk cijfer
+warme_maaltijd_gemeente <- data_warme_maaltijd %>% 
+  filter(Gemeente %in% params$gemeentenaam) %>% 
+  pull(`eet dagelijks een warme maaltijd (1-11 jaar)`)
+
+# Cijfer van de regio
+warme_maaltijd_GGDHVB <- data_warme_maaltijd %>% 
+  filter(Gemeente %in% "Hart voor Brabant") %>% 
+  pull(`eet dagelijks een warme maaltijd (1-11 jaar)`)
+
+
+# Schrijf weg om later te kunnen gebruiken in de tekst
+dagelijks_warme_maaltijd <- knitr::raw_html(paste0('<span style="color:#fdc715">',
+                                       warme_maaltijd_gemeente,
+                                       '%</span> van de kinderen tussen 1 en 11 jaar eet dagelijks een warme maaltijd (2021). In de regio 
+                                       GGD Hart voor Brabant is dit ',
+                                       warme_maaltijd_GGDHVB,
+                                       '%.'))
+```
+
+
+
+::: {layout="[10,90]" layout-valign="bottom"}
+![](input/Afbeeldingen/pot.svg){fig-alt="Afbeelding van pan met warme inhoud"}
+
+`r dagelijks_warme_maaltijd`
+
+:::
+
+::: {.legeRegel} 
+:::
+
+```{r dagelijks_groente, echo=FALSE, message=F}
+
+
+# Lees data in
+data_groente <- read_excel(params$dagelijks_groente_xlsx) %>% 
+  mutate(across(where(is.numeric), ~ .x * 100)) 
+
+
+# Gemeentelijk cijfer
+groente_gemeente <- data_groente %>% 
+  filter(Gemeente %in% params$gemeentenaam) %>% 
+  pull(`eet dagelijks groente (1-11 jaar)`)
+
+# Cijfer van de regio
+groente_GGDHVB <- data_groente %>% 
+  filter(Gemeente %in% "Hart voor Brabant") %>% 
+  pull(`eet dagelijks groente (1-11 jaar)`)
+
+
+# Schrijf weg om later te kunnen gebruiken in de tekst
+dagelijks_groente <- knitr::raw_html(paste0('<span style="color:#fdc715">',
+                                       groente_gemeente,
+                                       '%</span> van de kinderen tussen 1 en 11 jaar eet dagelijks groente (2021). In de regio GGD Hart voor Brabant is dit ',
+                                       groente_GGDHVB,
+                                       '%.'))
+
+
+```
+
+
+::: {layout="[10,90]" layout-valign="bottom"}
+![](input/Afbeeldingen/carrot.svg){fig-alt="Afbeelding van een wortel"}
+
+`r dagelijks_groente`
+
+:::
+
+::: {.legeRegel} 
+:::
+
+
+```{r dagelijks_fruit, echo=FALSE, message=F}
+
+
+# Lees data in
+data_fruit <- read_excel(params$dagelijks_fruit_xlsx) %>% 
+  mutate(across(where(is.numeric), ~ .x * 100))
+
+
+# Gemeentelijk cijfer
+fruit_gemeente <- data_fruit %>% 
+  filter(Gemeente %in% params$gemeentenaam) %>% 
+  pull(`eet dagelijks fruit (1-11 jaar)`)
+
+# Cijfer van de regio
+fruit_GGDHVB <- data_fruit %>% 
+  filter(Gemeente %in% "Hart voor Brabant") %>% 
+  pull(`eet dagelijks fruit (1-11 jaar)`)
+
+
+# Schrijf weg om later te kunnen gebruiken in de tekst
+dagelijks_fruit <- knitr::raw_html(paste0('<span style="color:#fdc715">',
+                                       fruit_gemeente,
+                                       '%</span> van de kinderen tussen 1 en 11 jaar eet dagelijks fruit (2021). In de regio GGD Hart voor Brabant is dit ',
+                                       fruit_GGDHVB,
+                                       '%.'))
+
+
+```
+
+::: {layout="[10,90]" layout-valign="bottom"}
+![](input/Afbeeldingen/apple.svg){fig-alt="Afbeelding van een appel"}
+
+`r dagelijks_fruit`
+
+:::
+
+::: {.legeRegel} 
+:::
+
+
+```{r dagelijks_tussendoortje, echo=FALSE, message=F}
+
+# Lees data in
+data_tussendoortje <- read_excel(params$dagelijks_tussendoortje_xlsx) %>% 
+  mutate(across(where(is.numeric), ~ .x * 100)) 
+
+
+# Gemeentelijk cijfer
+tussendoortje_gemeente <- data_tussendoortje %>% 
+  filter(Gemeente %in% params$gemeentenaam) %>% 
+  pull(`eet maximaal 2 keer per dag een zoet/hartig tussendoortje (1-11 jaar)`)
+
+# Cijfer van de regio
+tussendoortje_GGDHVB <- data_tussendoortje %>% 
+  filter(Gemeente %in% "Hart voor Brabant") %>% 
+  pull(`eet maximaal 2 keer per dag een zoet/hartig tussendoortje (1-11 jaar)`)
+
+
+# Schrijf weg om later te kunnen gebruiken in de tekst
+dagelijks_tussendoortje <- knitr::raw_html(paste0('<span style="color:#fdc715">',
+                                       tussendoortje_gemeente,
+                                       '%</span> van de kinderen tussen 1 en 11 jaar eet dagelijks maximaal 2 zoete of hartige 
+                                       tussendoortjes (2021). In de regio GGD Hart voor Brabant is dit ',
+                                       tussendoortje_GGDHVB,
+                                       '%.'))
+```
+
+
+
+::: {layout="[10,90]" layout-valign="bottom"}
+![](input/Afbeeldingen/snack.svg){fig-alt="Afbeelding van twee snacks"}
+
+`r dagelijks_tussendoortje`
+
+:::
+
+::: {.legeRegel} 
+:::
+
+```{r wekelijks_suikerdrank, echo=FALSE, message=F}
+
+# Lees data in
+data_suikerdrank <- read_excel(params$wekelijks_suikerdrank_xlsx) %>% 
+  mutate(across(where(is.numeric), ~ .x * 100)) 
+
+
+# Gemeentelijk cijfer
+suikerdrank_gemeente <- data_suikerdrank %>% 
+  filter(Gemeente %in% params$gemeentenaam) %>% 
+  pull(`drinkt maximaal 1 glas suikerhoudende drank per week (advies Voedingscentrum) (1-11 jaar)`)
+
+# Cijfer van de regio
+suikerdrank_GGDHVB <- data_suikerdrank %>% 
+  filter(Gemeente %in% "Hart voor Brabant") %>% 
+  pull(`drinkt maximaal 1 glas suikerhoudende drank per week (advies Voedingscentrum) (1-11 jaar)`)
+
+
+# Schrijf weg om later te kunnen gebruiken in de tekst
+dagelijks_suikerdrank <- knitr::raw_html(paste0('<span style="color:#fdc715">',
+                                       suikerdrank_gemeente,
+                                       '%</span> van de kinderen tussen 1 en 11 jaar drinkt per week maximaal 1 glas suikerhoudende drankjes 
+                                       (advies Voedingscentrum)(2021). In de regio GGD Hart voor Brabant is dit ',
+                                       suikerdrank_GGDHVB,
+                                       '%.'))
+```
+
+
+
+::: {layout="[10,90]" layout-valign="bottom"}
+![](input/Afbeeldingen/soda.svg){fig-alt="Afbeelding van een blikje met frisdrank"}
+
+`r dagelijks_suikerdrank`
+
+:::
+
+::: {.legeRegel} 
+:::
+
+
+### Opvoeding
+
+```{r opvoedprobleem, echo=FALSE, message=F}
+
+# Lees data in
+data_opvoedproblemen <- read_excel(params$opvoedproblemen_xlsx) %>% 
+  mutate(`Ouder ervaart soms of vaak problemen bij opvoeding (0-11 jaar)` = `Ouder ervaart soms of vaak problemen bij opvoeding (0-11 jaar)` * 100)
+           
+  
+# Gemeentelijk cijfer
+opvoedproblemen_gemeente <- data_opvoedproblemen %>% 
+  filter(Gemeente %in% params$gemeentenaam) %>% 
+  pull(`Ouder ervaart soms of vaak problemen bij opvoeding (0-11 jaar)`)
+
+# Cijfer van de regio
+opvoedproblemen_GGDHVB <- data_opvoedproblemen %>% 
+  filter(Gemeente %in% "Hart voor Brabant") %>% 
+  pull(`Ouder ervaart soms of vaak problemen bij opvoeding (0-11 jaar)`)
+
+
+# Schrijf weg om later te kunnen gebruiken in de tekst
+opvoedprobleem <- knitr::raw_html(paste0('<span style="color:#fdc715">',
+                                         opvoedproblemen_gemeente,
+                                         '%</span> van ouders van kinderen tussen 0 en 11 jaar ervaart soms tot vaak problemen bij de opvoeding (2021). 
+                                         In de regio GGD Hart voor Brabant is dit ',
+                                         opvoedproblemen_GGDHVB,
+                                         '%.'))
+
+
+```
+
+::: {layout="[10,90]" layout-valign="bottom"}
+![](input/Afbeeldingen/piggyback.svg){fig-alt="Afbeelding van een spelend kind en ouder"}
+
+`r opvoedprobleem`
+
+:::
+
+::: {.legeRegel} 
+:::
+
+```{r stress, echo=FALSE, message=F}
+
+# Lees data in
+data_opvoedstress <- read_excel(params$opvoedstress_xlsx) %>% 
+  mutate(`Ouder ervaart bovengemiddeld veel stress bij de opvoeding (0-11 jaar)` = `Ouder ervaart bovengemiddeld veel stress bij de opvoeding (0-11 jaar)` * 100)
+
+  
+# Gemeentelijk cijfer
+opvoedproblemen_gemeente <- data_opvoedstress %>% 
+  filter(Gemeente %in% params$gemeentenaam) %>% 
+  pull(`Ouder ervaart bovengemiddeld veel stress bij de opvoeding (0-11 jaar)`)
+
+# Cijfer van de regio
+opvoedproblemen_GGDHVB <- data_opvoedstress %>% 
+  filter(Gemeente %in% "Hart voor Brabant") %>% 
+  pull(`Ouder ervaart bovengemiddeld veel stress bij de opvoeding (0-11 jaar)`)
+
+
+# Schrijf weg om later te kunnen gebruiken in de tekst
+stress <- knitr::raw_html(paste0('<span style="color:#fdc715">',
+                                 opvoedproblemen_gemeente,
+                                 '%</span> van ouders van kinderen tussen 0 en 11 jaar ervaart bovengemiddeld veel stress bij 
+                                 de opvoeding (2021). In de regio GGD Hart voor Brabant is dit ',
+                                 opvoedproblemen_GGDHVB,
+                                 '%.'))
+
+
+```
+
+::: {layout="[10,90]" layout-valign="bottom"}
+![](input/Afbeeldingen/stress.svg){fig-alt="Afbeelding van een gestresst persoon"}
+
+`r stress`
+
+:::
