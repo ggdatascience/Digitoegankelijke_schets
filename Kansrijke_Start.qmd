@@ -12,7 +12,7 @@ format:
     toc-title: "Inhoudsopgave"
     embed-resources: true
     theme:
-    - cosmo
+    - default
 engine: knitr
 params:
   gemeentenaam: "'s-Hertogenbosch"
@@ -56,6 +56,7 @@ params:
 .quarto-title > h1.title {
   opacity: 0 !important;
   height: 0;
+  font-weight: 700;
 }
 
 .geleBanner > h2 {
@@ -69,6 +70,12 @@ params:
   margin-bottom: 2em;
 }
 
+@import url('
+https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,200..900;1,200..900&display=swap');
+
+body {
+  font-family: "Source Sans 3", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+}
 
 ```
 
